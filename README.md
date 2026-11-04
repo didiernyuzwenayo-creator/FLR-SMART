@@ -8,7 +8,7 @@
 - Activity, sample farmer follow-up, expanded tree monitoring, and daily report forms.
 - Tree monitoring fields for species, planting date, monitoring date, sample site label, planting method, condition, planted quantity, and observed living quantity.
 - Dashboard charts for monthly activities and planting trends, plus a clearly qualified survival estimate based on the latest observation per species and sample site.
-- Date-range field summaries with print / Save as PDF.
+- Date-range field summaries and monthly field reports with print / Save as PDF.
 - English and Kinyarwanda interface switching.
 - Local browser storage, JSON backup export, and CSV exports for all records or individual sections (CSV files open in Excel and Google Sheets).
 - Responsive layout for phones, tablets, and computers.
@@ -23,7 +23,7 @@
 - The prototype is not ready for operational or organizational use.
 
 ## Next development steps
-1. Test both languages, forms, and CSV exports on mobile and desktop.
+1. Test both languages, daily and monthly reports, forms, and CSV exports on mobile and desktop.
 2. Test repeated tree observations and older saved records.
 3. Review data protection and authorization requirements before adding real data.
 4. Consider authentication and a database only after the prototype is validated.
