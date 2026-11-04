@@ -5,7 +5,10 @@
 
 ## Current prototype features
 - Dashboard with record counts and recent entries.
-- Activity, sample farmer follow-up, tree monitoring, and daily report forms.
+- Activity, sample farmer follow-up, expanded tree monitoring, and daily report forms.
+- Tree monitoring fields for species, planting date, monitoring date, sample site label, planting method, condition, planted quantity, and observed living quantity.
+- Dashboard charts for monthly activities and planting trends, plus a clearly qualified survival estimate based on the latest observation per species and sample site.
+- Date-range field summaries with print / Save as PDF.
 - English and Kinyarwanda interface switching.
 - Local browser storage and JSON export.
 - Responsive layout for phones, tablets, and computers.
@@ -20,7 +23,7 @@
 - The prototype is not ready for operational or organizational use.
 
 ## Next development steps
-1. Test both languages and all forms on mobile and desktop.
+1. Test both languages and all forms on mobile and desktop, including repeated tree observations and older saved records.
 2. Add record editing and deletion with confirmation.
 3. Review data protection and authorization requirements before adding real data.
 4. Consider authentication and a database only after the prototype is validated.
