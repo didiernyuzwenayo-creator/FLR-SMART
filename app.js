@@ -1,4 +1,4 @@
-const keys=["activities","farmers","trees","reports"];
+const keys=["activities","farmers","trees","reports","calendar"];
 const words={
 "Language":"Ururimi",
 "FLR SMART · My Field Assistant · Version 1.0 · Personal prototype":"FLR SMART · Umufasha wanjye mu kazi · Verisiyo 1.0 · Igerageza bwite",
@@ -121,7 +121,8 @@ const words={
 "Dead":"Cyumye",
 "*Based on quantities entered in Tree Monitoring; not an official survival assessment.":"*Bishingiye ku mibare winjije mu gukurikirana ibiti; si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
 "*Based on the latest observation for each species and sample site; not an official survival assessment.":"*Bishingiye ku igenzura riheruka kuri buri bwoko n’ahantu h’icyitegererezo; si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
-"*Based on the latest observation recorded during this month for each species and sample site; this is an estimate, not an official survival assessment.":"*Bishingiye ku igenzura riheruka muri uko kwezi kuri buri bwoko n’ahantu h’icyitegererezo; ni igereranya, si isuzuma ryemewe ry’ukurokoka kw’ibiti."
+"*Based on the latest observation recorded during this month for each species and sample site; this is an estimate, not an official survival assessment.":"*Bishingiye ku igenzura riheruka muri uko kwezi kuri buri bwoko n’ahantu h’icyitegererezo; ni igereranya, si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
+"Field Calendar":"Kalendari y’ibikorwa byo mu mirima","FIELD PLANNING":"GUTEGURA IBIKORWA","Plan field activity":"Teganya igikorwa cyo mu murima","Planned field activities":"Ibikorwa biteganyijwe","Upcoming and overdue":"Ibikorwa biri hafi n’ibyarengeje igihe","Plan sample field activities and review what is due. Reminders are shown inside this app only.":"Teganya ibikorwa by’icyitegererezo urebe ibigiye gukorwa. Ibibutsa bigaragarira muri iyi porogaramu gusa.","Activity title":"Izina ry’igikorwa","Planned date":"Itariki iteganyijwe","Time (optional)":"Isaha (si ngombwa)","Category":"Icyiciro","Field visit":"Gusura aho ibikorwa biri","Meeting":"Inama","Postponed":"Cyigijwe inyuma","Save planned activity":"Bika igikorwa giteganyijwe","e.g. Sample field visit":"Urugero: gusura ahantu h’icyitegererezo","No planned activities yet.":"Nta bikorwa biteganyijwe biraboneka.","Due today":"Giteganyijwe uyu munsi","Overdue":"Igihe cyacyo cyarenze","Upcoming":"Kiri hafi","No upcoming activities.":"Nta bikorwa biri hafi.","Reminders are in-app only; no push notifications are sent.":"Ibibutsa biri muri porogaramu gusa; nta butumwa bwo hanze bwoherezwa."
 };
 function tr(text){const lang=localStorage.getItem("flr_language")||"en";return lang==="rw"?(words[text]||text):text}
 function todayLocal(){const now=new Date();const offset=now.getTimezoneOffset();return new Date(now.getTime()-offset*60000).toISOString().slice(0,10)}
@@ -163,15 +164,27 @@ function renderAnalytics(){
 function render(){
  keys.forEach(key=>{
   const records=read(key);
-  document.getElementById(({activities:"ac",farmers:"fa",trees:"tr",reports:"re"})[key]).textContent=records.length;
+  document.getElementById(({activities:"ac",farmers:"fa",trees:"tr",reports:"re",calendar:"cal"})[key]).textContent=records.length;
   const list=document.getElementById(key+"-list");
   if(list)list.innerHTML=records.slice().reverse().map((record,reverseIndex)=>{const index=records.length-1-reverseIndex;return '<div class="item"><b>'+safe(record.title||tr("Daily Reports"))+'</b><small>'+safe(record.date)+' · '+safe(tr(record.status||record.area||""))+'</small><p>'+safe(record.notes)+'</p>'+(key==="trees"?'<small>'+safe(tr("Planting date"))+': '+safe(record.planting_date||record.date)+' · '+safe(tr("Quantity planted"))+': '+safe(record.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(record.alive)+'</small><small>'+safe(record.area||"")+' · '+safe(tr(record.method||""))+' · '+safe(tr(record.condition||""))+'</small>':'')+'<div class="record-actions"><button type="button" class="edit-record" data-edit="'+key+'" data-index="'+index+'">'+safe(tr("Edit"))+'</button><button type="button" class="delete-record" data-delete="'+key+'" data-index="'+index+'">'+safe(tr("Delete"))+'</button></div></div>'}).join("")||tr("No records yet.");
  });
  const recent=keys.flatMap(key=>read(key).map(record=>({...record,kind:key}))).slice(-5).reverse();
- document.getElementById("recent").innerHTML=recent.map(record=>'<div class="item"><b>'+safe(record.title)+'</b><small>'+safe(record.date)+' · '+safe(tr(({activities:"Activities",farmers:"Farmer follow-ups",trees:"Tree records",reports:"Daily Reports"})[record.kind]))+'</small></div>').join("")||tr("No records yet.");
+ document.getElementById("recent").innerHTML=recent.map(record=>'<div class="item"><b>'+safe(record.title)+'</b><small>'+safe(record.date)+' · '+safe(tr(({activities:"Activities",farmers:"Farmer follow-ups",trees:"Tree records",reports:"Daily Reports",calendar:"Field Calendar"})[record.kind]))+'</small></div>').join("")||tr("No records yet.");
  document.querySelectorAll("[data-edit]").forEach(button=>button.addEventListener("click",()=>editRecord(button.dataset.edit,Number(button.dataset.index))));
  document.querySelectorAll("[data-delete]").forEach(button=>button.addEventListener("click",()=>deleteRecord(button.dataset.delete,Number(button.dataset.index))));
  renderAnalytics();
+ renderCalendar();
+}
+function renderCalendar(){
+ const target=document.getElementById("calendar-upcoming");
+ if(!target)return;
+ const today=todayLocal();
+ const items=read("calendar").filter(item=>item.status!=="Completed").sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.time||"").localeCompare(b.time||""));
+ if(!items.length){target.innerHTML="<p>"+safe(tr("No upcoming activities."))+"</p>";return}
+ target.innerHTML=items.map(item=>{
+  const state=item.date<today?"Overdue":item.date===today?"Due today":"Upcoming";
+  return '<div class="item calendar-item"><b>'+safe(item.title)+'</b><small>'+safe(item.date)+ (item.time?" · "+safe(item.time):"") +' · '+safe(tr(item.category||""))+' · '+safe(tr(item.status||""))+'</small><span class="calendar-badge '+(state==="Overdue"?"is-overdue":state==="Due today"?"is-today":"")+'">'+safe(tr(state))+'</span>'+(item.area?'<p>'+safe(item.area)+'</p>':"")+(item.notes?'<p>'+safe(item.notes)+'</p>':"")+'</div>';
+ }).join("");
 }
 function editRecord(key,index){
  const records=read(key),record=records[index],form=document.querySelector('form[data-store="'+key+'"]');
@@ -181,7 +194,7 @@ function editRecord(key,index){
  form.dataset.editIndex=String(index);
  let cancel=form.querySelector(".cancel-edit");
  if(!cancel){cancel=document.createElement("button");cancel.type="button";cancel.className="cancel-edit secondary";cancel.textContent=tr("Cancel edit");form.appendChild(cancel);cancel.addEventListener("click",()=>{delete form.dataset.editIndex;form.reset();cancel.remove();form.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
-form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft"})[key]);})}
+form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft",calendar:"Save planned activity"})[key]);})}
  form.querySelector(".save").textContent=tr("Update record");
  show(key);form.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -195,7 +208,7 @@ document.querySelectorAll("form[data-store]").forEach(form=>form.addEventListene
  const data=Object.fromEntries(new FormData(form));
  if(form.dataset.store==="trees"&&Number(data.alive)>Number(data.planted)){alert(tr("Alive quantity cannot exceed planted quantity."));return}
  const records=read(form.dataset.store),editing=form.dataset.editIndex;
- if(editing!==undefined){records[Number(editing)]=data;delete form.dataset.editIndex;const cancel=form.querySelector(".cancel-edit");if(cancel)cancel.remove();form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft"})[form.dataset.store]);}
+ if(editing!==undefined){records[Number(editing)]=data;delete form.dataset.editIndex;const cancel=form.querySelector(".cancel-edit");if(cancel)cancel.remove();form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft",calendar:"Save planned activity"})[form.dataset.store]);}
  else records.push(data);
  localStorage.setItem("flr_"+form.dataset.store,JSON.stringify(records));
  form.reset();
