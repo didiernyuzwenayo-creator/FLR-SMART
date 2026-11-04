@@ -216,18 +216,24 @@ function csvCell(value){
  if(/^[=+@\\-\\t\\r]/.test(text))text="'"+text;
  return '"'+text.replace(/"/g,'""')+'"';
 }
+function downloadCsv(filename,fields,records){
+ const rows=[fields.map(csvCell).join(","),...records.map(record=>fields.map(field=>csvCell(record[field])).join(","))];
+ const content="\\uFEFF"+rows.join("\\r\\n");
+ const url=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8"}));
+ const link=document.createElement("a");link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 function exportCsv(group){
- const selected=group==="all"?keys:[group];
  const labels={activities:"activities",farmers:"farmer-follow-ups",trees:"tree-monitoring",reports:"daily-reports"};
- selected.forEach(key=>{
-  const records=read(key);
-  const fields=[...new Set(records.flatMap(record=>Object.keys(record)))];
-  if(!fields.length){fields.push(...({activities:["title","date","status","area","notes"],farmers:["title","date","status","area","notes"],trees:["title","planting_date","date","area","method","condition","planted","alive","notes"],reports:["date","title","area","notes"]}[key]))}
-  const rows=[fields.map(csvCell).join(","),...records.map(record=>fields.map(field=>csvCell(record[field])).join(","))];
-  const content="\\uFEFF"+rows.join("\\r\\n");
-  const url=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8"}));
-  const link=document.createElement("a");link.href=url;link.download="flr-smart-"+labels[key]+".csv";document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
- });
+ if(group==="all"){
+  const records=keys.flatMap(key=>read(key).map(record=>({record_type:key,...record})));
+  const fields=["record_type",...new Set(records.flatMap(record=>Object.keys(record).filter(field=>field!=="record_type")))];
+  downloadCsv("flr-smart-all-records.csv",fields,records);
+  return;
+ }
+ const records=read(group);
+ const fields=[...new Set(records.flatMap(record=>Object.keys(record)))];
+ if(!fields.length)fields.push(...({activities:["title","date","status","area","notes"],farmers:["title","date","status","area","notes"],trees:["title","planting_date","date","area","method","condition","planted","alive","notes"],reports:["date","title","area","notes"]}[group]));
+ downloadCsv("flr-smart-"+labels[group]+".csv",fields,records);
 }
 document.querySelectorAll("[data-export-csv]").forEach(button=>button.addEventListener("click",()=>exportCsv(button.dataset.exportCsv)));
 document.getElementById("export").addEventListener("click",()=>{
