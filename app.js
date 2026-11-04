@@ -235,7 +235,7 @@ function buildSummary(){
 function buildMonthlyReport(){
  const period=document.getElementById("monthly-period").value;
  const preview=document.getElementById("monthly-preview");
- if(!/^\\d{4}-\\d{2}$/.test(period)){alert(tr("Please choose a valid date range."));return}
+ if(!/^\d{4}-\d{2}$/.test(period)){alert(tr("Please choose a valid date range."));return}
  const start=period+"-01";
  const [year,month]=period.split("-").map(Number);
  const lastDay=new Date(year,month,0).getDate();
