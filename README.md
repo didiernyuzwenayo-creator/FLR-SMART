@@ -10,7 +10,7 @@
 - Dashboard charts for monthly activities and planting trends, plus a clearly qualified survival estimate based on the latest observation per species and sample site.
 - Date-range field summaries with print / Save as PDF.
 - English and Kinyarwanda interface switching.
-- Local browser storage and JSON export.
+- Local browser storage, JSON backup export, and CSV exports for all records or individual sections (CSV files open in Excel and Google Sheets).
 - Responsive layout for phones, tablets, and computers.
 - Basic service-worker caching of the app shell after the first successful load.
 
@@ -23,8 +23,8 @@
 - The prototype is not ready for operational or organizational use.
 
 ## Next development steps
-1. Test both languages and all forms on mobile and desktop, including repeated tree observations and older saved records.
-2. Add record editing and deletion with confirmation.
+1. Test both languages, forms, and CSV exports on mobile and desktop.
+2. Test repeated tree observations and older saved records.
 3. Review data protection and authorization requirements before adding real data.
 4. Consider authentication and a database only after the prototype is validated.
 
