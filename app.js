@@ -1,5 +1,9 @@
 const keys=["activities","farmers","trees","reports"];
 const words={
+"Language":"Ururimi",
+"FLR SMART · My Field Assistant · Version 1.0 · Personal prototype":"FLR SMART · Umufasha wanjye mu kazi · Verisiyo 1.0 · Igerageza bwite",
+"Saved on this device.":"Byabitswe kuri iki gikoresho.",
+"Alive quantity cannot exceed planted quantity.":"Umubare w'ibiti bikiriho ntushobora kurenga uwatewe.",
 "MY FIELD ASSISTANT":"UMUFASHA W'AKAZI KO MU MIRIMA",
 "FIELD OFFICER":"USHINZWE AKAZI KO MU MIRIMA",
 "Dashboard":"Ahabanza",
