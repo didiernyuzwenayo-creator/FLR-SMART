@@ -238,7 +238,8 @@ function buildMonthlyReport(){
  if(!/^\\d{4}-\\d{2}$/.test(period)){alert(tr("Please choose a valid date range."));return}
  const start=period+"-01";
  const [year,month]=period.split("-").map(Number);
- const end=new Date(year,month,0).toISOString().slice(0,10);
+ const lastDay=new Date(year,month,0).getDate();
+ const end=period+"-"+String(lastDay).padStart(2,"0");
  const inMonth=key=>read(key).filter(item=>item.date&&item.date>=start&&item.date<=end);
  const activities=inMonth("activities"),farmers=inMonth("farmers"),trees=inMonth("trees"),reports=inMonth("reports");
  const completed=activities.filter(x=>x.status==="Completed").length;
