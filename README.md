@@ -1,33 +1,29 @@
 # FLR SMART – My Field Assistant
 
 **Version:** 1.0 – Field Officer Edition  
-**Status:** Personal prototype / early development  
-**Owner:** Project creator
-
-## Purpose
-A lightweight personal assistant prototype for organizing field activities, sample farmer follow-ups, tree monitoring observations, and daily report drafts.
+**Status:** Personal prototype / early development
 
 ## Current prototype features
 - Dashboard with record counts and recent entries.
-- Activity, farmer follow-up, tree monitoring, and daily report forms.
-- Local browser storage on the current device.
-- JSON export of saved records.
+- Activity, sample farmer follow-up, tree monitoring, and daily report forms.
+- English and Kinyarwanda interface switching.
+- Local browser storage and JSON export.
 - Responsive layout for phones, tablets, and computers.
-- English interface foundation; Kinyarwanda translation is planned for the next update.
+- Basic service-worker caching of the app shell after the first successful load.
 
 ## Important limitations
 - This is a personal prototype, **not an officially approved Tubura or One Acre Fund system**.
 - Use fictional/sample information only. Do not enter confidential work information, real farmer personal data, employee data, or sensitive coordinates.
-- Records stay in the browser on the device used. There is no user account, cloud database, secure multi-user access, or cross-device synchronization yet.
+- Records stay in the browser on the device used. There is no user account, cloud database, secure multi-user access, or cross-device synchronization.
+- Service-worker caching is not the same as full offline data synchronization. The app shell may reopen after it has loaded successfully once, but this must be tested on the target browser.
 - No KoboToolbox, ODK, Google Forms/Sheets, GIS, or AI integration is implemented.
-- The prototype is not yet ready for operational or organizational use.
+- The prototype is not ready for operational or organizational use.
 
 ## Next development steps
-1. Complete Kinyarwanda and English language switching.
-2. Improve validation, editing, and record deletion.
-3. Test on mobile and desktop.
-4. Review data protection and authorization requirements before adding real data.
-5. Consider authentication and a database only after the prototype is validated.
+1. Test both languages and all forms on mobile and desktop.
+2. Add record editing and deletion with confirmation.
+3. Review data protection and authorization requirements before adding real data.
+4. Consider authentication and a database only after the prototype is validated.
 
 ## Technology
-HTML, CSS, and JavaScript. GitHub repository is used for source control.
+HTML, CSS, JavaScript, browser localStorage, and a basic service worker.
