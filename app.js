@@ -53,6 +53,14 @@ const words={
 "Challenges and next steps":"Imbogamizi n'ibikurikiraho",
 "Save report draft":"Bika umushinga wa raporo",
 "Export records (JSON)":"Kuramo inyandiko (JSON)",
+"Data export":"Gukuramo amakuru",
+"Download a CSV file that opens in Excel or Google Sheets.":"Kuramo dosiye ya CSV ifunguka muri Excel cyangwa Google Sheets.",
+"Export all records (CSV)":"Kuramo inyandiko zose (CSV)",
+"Activities (CSV)":"Ibikorwa (CSV)",
+"Farmer follow-ups (CSV)":"Gukurikirana abahinzi (CSV)",
+"Tree monitoring (CSV)":"Gukurikirana ibiti (CSV)",
+"Daily reports (CSV)":"Raporo za buri munsi (CSV)",
+"Export backup (JSON)":"Kuramo kopi y’inyandiko (JSON)",
 "Prototype with sample data only. Do not enter confidential work or farmer information.":"Igerageza rikoresha amakuru y'icyitegererezo gusa. Ntushyiremo amakuru y'akazi cyangwa ay'abahinzi y'ibanga.",
 "Personal edition · 1.0":"Verisiyo bwite · 1.0",
 "Sample area only":"Ahantu h'icyitegererezo gusa",
@@ -203,6 +211,25 @@ function buildSummary(){
 }
 document.getElementById("build-summary").addEventListener("click",buildSummary);
 document.getElementById("print-summary").addEventListener("click",()=>window.print());
+function csvCell(value){
+ let text=String(value??"");
+ if(/^[=+@\\-\\t\\r]/.test(text))text="'"+text;
+ return '"'+text.replace(/"/g,'""')+'"';
+}
+function exportCsv(group){
+ const selected=group==="all"?keys:[group];
+ const labels={activities:"activities",farmers:"farmer-follow-ups",trees:"tree-monitoring",reports:"daily-reports"};
+ selected.forEach(key=>{
+  const records=read(key);
+  const fields=[...new Set(records.flatMap(record=>Object.keys(record)))];
+  if(!fields.length){fields.push(...({activities:["title","date","status","area","notes"],farmers:["title","date","status","area","notes"],trees:["title","planting_date","date","area","method","condition","planted","alive","notes"],reports:["date","title","area","notes"]}[key]))}
+  const rows=[fields.map(csvCell).join(","),...records.map(record=>fields.map(field=>csvCell(record[field])).join(","))];
+  const content="\\uFEFF"+rows.join("\\r\\n");
+  const url=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8"}));
+  const link=document.createElement("a");link.href=url;link.download="flr-smart-"+labels[key]+".csv";document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+}
+document.querySelectorAll("[data-export-csv]").forEach(button=>button.addEventListener("click",()=>exportCsv(button.dataset.exportCsv)));
 document.getElementById("export").addEventListener("click",()=>{
  const data={};keys.forEach(key=>data[key]=read(key));
  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));
