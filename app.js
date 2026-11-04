@@ -53,6 +53,28 @@ const words={
 "Challenges and next steps":"Imbogamizi n'ibikurikiraho",
 "Save report draft":"Bika umushinga wa raporo",
 "Export records (JSON)":"Kuramo inyandiko (JSON)",
+"Monthly report":"Raporo ya buri kwezi",
+"Report month":"Ukwezi kwa raporo",
+"Generate monthly report":"Kora raporo y’ukwezi",
+"Print monthly report":"Sohora raporo y’ukwezi",
+"Choose a month and generate a monthly field report.":"Hitamo ukwezi ukore raporo y’ibikorwa by’uwo kwezi.",
+"MONTHLY FIELD REPORT":"RAPORO Y’IBIKORWA BY’UKWEZI",
+"Completed activities":"Ibikorwa byarangiye",
+"Activities needing follow-up":"Ibikorwa bigikeneye gukurikiranwa",
+"Farmers visited":"Abahinzi basuwe",
+"Follow-ups needed":"Abahinzi bakeneye kongera gukurikiranwa",
+"Tree planting entries":"Inyandiko zo gutera ibiti",
+"Tree monitoring visits":"Igenzura ry’ibiti",
+"Monthly trees planted":"Ibiti byatewe muri uko kwezi",
+"Latest trees observed alive":"Ibiti byabonetse bikiriho mu igenzura riheruka",
+"Estimated observed survival":"Ijanisha ry’ibiti byabonetse bikiriho",
+"Daily reports submitted":"Raporo za buri munsi zabitswe",
+"Activity details":"Ibisobanuro by’ibikorwa",
+"Farmer follow-up details":"Ibisobanuro byo gukurikirana abahinzi",
+"Tree monitoring details":"Ibisobanuro by’igenzura ry’ibiti",
+"Monitoring date":"Itariki y’igenzura",
+"Planting date":"Itariki yo gutera",
+"No entries this month.":"Nta nyandiko zabonetse muri uku kwezi.",
 "Data export":"Gukuramo amakuru",
 "Download a CSV file that opens in Excel or Google Sheets.":"Kuramo dosiye ya CSV ifunguka muri Excel cyangwa Google Sheets.",
 "Export all records (CSV)":"Kuramo inyandiko zose (CSV)",
@@ -98,7 +120,8 @@ const words={
 "Drying":"Kiruma",
 "Dead":"Cyumye",
 "*Based on quantities entered in Tree Monitoring; not an official survival assessment.":"*Bishingiye ku mibare winjije mu gukurikirana ibiti; si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
-"*Based on the latest observation for each species and sample site; not an official survival assessment.":"*Bishingiye ku igenzura riheruka kuri buri bwoko n’ahantu h’icyitegererezo; si isuzuma ryemewe ry’ukurokoka kw’ibiti."
+"*Based on the latest observation for each species and sample site; not an official survival assessment.":"*Bishingiye ku igenzura riheruka kuri buri bwoko n’ahantu h’icyitegererezo; si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
+"*Based on the latest observation recorded during this month for each species and sample site; this is an estimate, not an official survival assessment.":"*Bishingiye ku igenzura riheruka muri uko kwezi kuri buri bwoko n’ahantu h’icyitegererezo; ni igereranya, si isuzuma ryemewe ry’ukurokoka kw’ibiti."
 };
 function tr(text){const lang=localStorage.getItem("flr_language")||"en";return lang==="rw"?(words[text]||text):text}
 function todayLocal(){const now=new Date();const offset=now.getTimezoneOffset();return new Date(now.getTime()-offset*60000).toISOString().slice(0,10)}
@@ -209,6 +232,60 @@ function buildSummary(){
  preview.innerHTML=html;
  document.getElementById("print-summary").disabled=false;
 }
+function buildMonthlyReport(){
+ const period=document.getElementById("monthly-period").value;
+ const preview=document.getElementById("monthly-preview");
+ if(!/^\\d{4}-\\d{2}$/.test(period)){alert(tr("Please choose a valid date range."));return}
+ const start=period+"-01";
+ const [year,month]=period.split("-").map(Number);
+ const end=new Date(year,month,0).toISOString().slice(0,10);
+ const inMonth=key=>read(key).filter(item=>item.date&&item.date>=start&&item.date<=end);
+ const activities=inMonth("activities"),farmers=inMonth("farmers"),trees=inMonth("trees"),reports=inMonth("reports");
+ const completed=activities.filter(x=>x.status==="Completed").length;
+ const needsFollow=activities.filter(x=>x.status==="Follow-up needed").length;
+ const visited=farmers.filter(x=>x.status==="Visited").length;
+ const farmerNeeds=farmers.filter(x=>x.status==="Needs follow-up"||x.status==="Not reached").length;
+ const plantingGroups=new Map();
+ read("trees").forEach(item=>{
+  const plantingDate=item.planting_date||item.date;
+  if(plantingDate&&plantingDate>=start&&plantingDate<=end){
+   const key=[item.title||"",item.area||"",plantingDate].join("|");
+   if(!plantingGroups.has(key))plantingGroups.set(key,item);
+  }
+ });
+ const planted=[...plantingGroups.values()].reduce((sum,item)=>sum+Math.max(0,Number(item.planted)||0),0);
+ const latestSites=new Map();
+ trees.forEach(item=>{
+  const key=[item.title||"",item.area||""].join("|");
+  const old=latestSites.get(key);
+  if(!old||String(item.date||"")>=String(old.date||""))latestSites.set(key,item);
+ });
+ const latest=[...latestSites.values()];
+ const observedPlanted=latest.reduce((sum,item)=>sum+Math.max(0,Number(item.planted)||0),0);
+ const alive=latest.reduce((sum,item)=>sum+Math.max(0,Number(item.alive)||0),0);
+ const rate=observedPlanted?Math.min(100,alive/observedPlanted*100).toFixed(1)+"%":"—";
+ const monthName=new Intl.DateTimeFormat(localStorage.getItem("flr_language")==="rw"?"rw-RW":"en-US",{month:"long",year:"numeric"}).format(new Date(year,month-1,1));
+ let out='<h3>'+safe(tr("MONTHLY FIELD REPORT"))+'</h3><p><b>'+safe(tr("Report month"))+':</b> '+safe(monthName)+'</p><div class="summary-grid">';
+ const metrics=[["Activities recorded",activities.length],["Completed activities",completed],["Activities needing follow-up",needsFollow],["Farmer follow-ups",farmers.length],["Farmers visited",visited],["Follow-ups needed",farmerNeeds],["Tree planting entries",plantingGroups.size],["Monthly trees planted",planted],["Tree monitoring visits",trees.length],["Latest trees observed alive",alive],["Estimated observed survival",rate],["Daily reports submitted",reports.length]];
+ metrics.forEach(([label,value])=>{out+='<article>'+safe(tr(label))+'<strong>'+safe(value)+'</strong></article>'});
+ out+='</div><p><small>'+safe(tr("*Based on the latest observation recorded during this month for each species and sample site; this is an estimate, not an official survival assessment."))+'</small></p>';
+ const sections=[["Activity details",activities],["Farmer follow-up details",farmers],["Tree monitoring details",trees]];
+ sections.forEach(([title,items])=>{
+  out+='<h4>'+safe(tr(title))+'</h4>';
+  if(!items.length){out+='<p>—</p>';return}
+  items.forEach(item=>{
+   out+='<p>• '+safe(item.date)+' — '+safe(item.title||"")+' '+safe(item.status||"")+' '+safe(item.notes||"");
+   if(title==="Tree monitoring details")out+='<br>'+safe(tr("Planting date"))+': '+safe(item.planting_date||item.date)+' · '+safe(tr("Quantity planted"))+': '+safe(item.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(item.alive)+' · '+safe(item.area||"");
+   out+='</p>';
+  });
+ });
+ if(!activities.length&&!farmers.length&&!trees.length&&!reports.length)out+='<p>'+safe(tr("No entries this month."))+'</p>';
+ preview.innerHTML=out;
+ document.getElementById("print-monthly").disabled=false;
+}
+document.getElementById("build-monthly").addEventListener("click",buildMonthlyReport);
+document.getElementById("print-monthly").addEventListener("click",()=>{document.body.classList.add("print-monthly");window.print();});
+window.addEventListener("afterprint",()=>document.body.classList.remove("print-monthly"));
 document.getElementById("build-summary").addEventListener("click",buildSummary);
 document.getElementById("print-summary").addEventListener("click",()=>window.print());
 function csvCell(value){
@@ -255,5 +332,6 @@ function applyLanguage(){
 document.getElementById("language").addEventListener("change",event=>{localStorage.setItem("flr_language",event.target.value);location.reload()});
 document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
 document.getElementById("summary-from").value=todayLocal();document.getElementById("summary-to").value=todayLocal();
+document.getElementById("monthly-period").value=todayLocal().slice(0,7);
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(error=>console.warn("Service worker unavailable",error)))}
 applyLanguage();render();
