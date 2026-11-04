@@ -73,6 +73,22 @@ const words={
 "Tree planting trend":"Imigendekere yo gutera ibiti",
 "Observed tree survival rate*":"Ijanisha ry’ibiti byabonetse bikiriho*",
 "No data":"Nta makuru arahari",
+"Planting date":"Itariki yo gutera",
+"Monitoring date":"Itariki yo gukurikirana",
+"Sample planting site":"Ahantu h’icyitegererezo hatewe",
+"e.g. Sample plot A":"Urugero: umurima w’icyitegererezo A",
+"Planting method":"Uburyo bwo gutera",
+"Not specified":"Ntabwo bwagaragajwe",
+"Boundary planting":"Gutera ku mbibi",
+"Woodlot":"Agashyamba",
+"Agroforestry":"Kuvanga ibiti n’imyaka",
+"Hedge":"Uruzitiro rw’ibiti",
+"Other":"Ubundi buryo",
+"Tree condition":"Imiterere y’igiti",
+"Not assessed":"Ntibiragenzurwa",
+"Healthy":"Kimeze neza",
+"Drying":"Kiruma",
+"Dead":"Cyumye",
 "*Based on quantities entered in Tree Monitoring; not an official survival assessment.":"*Bishingiye ku mibare winjije mu gukurikirana ibiti; si isuzuma ryemewe ry’ukurokoka kw’ibiti."
 };
 function tr(text){const lang=localStorage.getItem("flr_language")||"en";return lang==="rw"?(words[text]||text):text}
@@ -88,14 +104,28 @@ function renderAnalytics(){
  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({year:d.getFullYear(),month:d.getMonth(),label:new Intl.DateTimeFormat(localStorage.getItem("flr_language")==="rw"?"rw-RW":"en-US",{month:"short"}).format(d),activities:0,planted:0})}
  const findMonth=date=>{if(!date)return null;const d=new Date(date+"T12:00:00");return months.find(m=>m.year===d.getFullYear()&&m.month===d.getMonth())};
  read("activities").forEach(item=>{const m=findMonth(item.date);if(m)m.activities++});
- read("trees").forEach(item=>{const m=findMonth(item.date);if(m)m.planted+=Math.max(0,Number(item.planted)||0)});
+ const plantingGroups=new Map();
+ read("trees").forEach(item=>{
+  const plantingDate=item.planting_date||item.date;
+  const groupKey=[item.title||"",item.area||"",plantingDate||""].join("|");
+  if(!plantingGroups.has(groupKey))plantingGroups.set(groupKey,item);
+ });
+ plantingGroups.forEach(item=>{const m=findMonth(item.planting_date||item.date);if(m)m.planted+=Math.max(0,Number(item.planted)||0)});
  const draw=(id,key)=>{
   const el=document.getElementById(id),max=Math.max(1,...months.map(m=>m[key]));
   el.innerHTML=months.map(m=>'<div class="bar-column" title="'+safe(m.label)+': '+Number(m[key]).toLocaleString()+'"><div class="bar-value">'+Number(m[key]).toLocaleString()+'</div><div class="bar-track"><div class="bar-fill '+(key==="planted"?"tree-fill":"activity-fill")+'" style="height:'+Math.max(m[key]>0?4:0,m[key]/max*100)+'%"></div></div><small>'+safe(m.label)+'</small></div>').join("");
   if(months.every(m=>m[key]===0))el.innerHTML='<p class="chart-empty">'+safe(tr("No data"))+'</p>';
  };
  draw("activity-chart","activities");draw("tree-chart","planted");
- const treeRecords=read("trees"),planted=treeRecords.reduce((s,r)=>s+Math.max(0,Number(r.planted)||0),0),alive=treeRecords.reduce((s,r)=>s+Math.max(0,Number(r.alive)||0),0);
+ const latestBySite=new Map();
+ read("trees").forEach(record=>{
+  const groupKey=[record.title||"",record.area||""].join("|");
+  const existing=latestBySite.get(groupKey);
+  if(!existing||String(record.date||"")>=String(existing.date||""))latestBySite.set(groupKey,record);
+ });
+ const latestTreeRecords=[...latestBySite.values()];
+ const planted=latestTreeRecords.reduce((s,r)=>s+Math.max(0,Number(r.planted)||0),0);
+ const alive=latestTreeRecords.reduce((s,r)=>s+Math.max(0,Number(r.alive)||0),0);
  document.getElementById("survival-rate").textContent=planted?Math.min(100,alive/planted*100).toFixed(1)+"%":"—";
 }
 function render(){
@@ -103,7 +133,7 @@ function render(){
   const records=read(key);
   document.getElementById(({activities:"ac",farmers:"fa",trees:"tr",reports:"re"})[key]).textContent=records.length;
   const list=document.getElementById(key+"-list");
-  if(list)list.innerHTML=records.slice().reverse().map((record,reverseIndex)=>{const index=records.length-1-reverseIndex;return '<div class="item"><b>'+safe(record.title||tr("Daily Reports"))+'</b><small>'+safe(record.date)+' · '+safe(tr(record.status||record.area||""))+'</small><p>'+safe(record.notes)+'</p>'+(key==="trees"?'<small>'+safe(tr("Quantity planted"))+': '+safe(record.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(record.alive)+'</small>':'')+'<div class="record-actions"><button type="button" class="edit-record" data-edit="'+key+'" data-index="'+index+'">'+safe(tr("Edit"))+'</button><button type="button" class="delete-record" data-delete="'+key+'" data-index="'+index+'">'+safe(tr("Delete"))+'</button></div></div>'}).join("")||tr("No records yet.");
+  if(list)list.innerHTML=records.slice().reverse().map((record,reverseIndex)=>{const index=records.length-1-reverseIndex;return '<div class="item"><b>'+safe(record.title||tr("Daily Reports"))+'</b><small>'+safe(record.date)+' · '+safe(tr(record.status||record.area||""))+'</small><p>'+safe(record.notes)+'</p>'+(key==="trees"?'<small>'+safe(tr("Planting date"))+': '+safe(record.planting_date||record.date)+' · '+safe(tr("Quantity planted"))+': '+safe(record.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(record.alive)+'</small><small>'+safe(record.area||"")+' · '+safe(tr(record.method||""))+' · '+safe(tr(record.condition||""))+'</small>':'')+'<div class="record-actions"><button type="button" class="edit-record" data-edit="'+key+'" data-index="'+index+'">'+safe(tr("Edit"))+'</button><button type="button" class="delete-record" data-delete="'+key+'" data-index="'+index+'">'+safe(tr("Delete"))+'</button></div></div>'}).join("")||tr("No records yet.");
  });
  const recent=keys.flatMap(key=>read(key).map(record=>({...record,kind:key}))).slice(-5).reverse();
  document.getElementById("recent").innerHTML=recent.map(record=>'<div class="item"><b>'+safe(record.title)+'</b><small>'+safe(record.date)+' · '+safe(tr(({activities:"Activities",farmers:"Farmer follow-ups",trees:"Tree records",reports:"Daily Reports"})[record.kind]))+'</small></div>').join("")||tr("No records yet.");
@@ -136,7 +166,7 @@ document.querySelectorAll("form[data-store]").forEach(form=>form.addEventListene
  else records.push(data);
  localStorage.setItem("flr_"+form.dataset.store,JSON.stringify(records));
  form.reset();
- document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
+ form.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
  render();alert(tr("Saved on this device."));
 }));
 
@@ -150,8 +180,11 @@ function buildSummary(){
  const farmers=inRange("farmers");
  const trees=inRange("trees");
  const reports=inRange("reports");
- const planted=trees.reduce((sum,item)=>sum+Math.max(0,Number(item.planted)||0),0);
- const alive=trees.reduce((sum,item)=>sum+Math.max(0,Number(item.alive)||0),0);
+ const latestTreeGroups=new Map();
+ trees.forEach(item=>{const key=[item.title||"",item.area||""].join("|");const old=latestTreeGroups.get(key);if(!old||String(item.date||"")>=String(old.date||""))latestTreeGroups.set(key,item)});
+ const currentTreeRecords=[...latestTreeGroups.values()];
+ const planted=currentTreeRecords.reduce((sum,item)=>sum+Math.max(0,Number(item.planted)||0),0);
+ const alive=currentTreeRecords.reduce((sum,item)=>sum+Math.max(0,Number(item.alive)||0),0);
  let html='<h3>'+safe(tr("FIELD SUMMARY"))+'</h3><p><b>'+safe(tr("Summary period"))+':</b> '+safe(from)+' — '+safe(to)+'</p>';
  html+='<div class="summary-grid">';
  [['Activities recorded',activities.length],['Farmer follow-ups',farmers.length],['Tree monitoring records',trees.length],['Trees planted',planted],['Trees observed alive',alive],['Saved daily reports',reports.length]].forEach(item=>{html+='<article>'+safe(tr(item[0]))+'<strong>'+Number(item[1]).toLocaleString()+'</strong></article>'});
@@ -160,7 +193,7 @@ function buildSummary(){
  sections.forEach(section=>{
   html+='<h4>'+safe(tr(section[0]))+'</h4>';
   if(!section[1].length){html+='<p>—</p>';return}
-  section[1].forEach(item=>{html+='<p>• '+safe(item.date)+' — '+safe(item.title||'')+' '+safe(item.status||'')+' '+safe(item.notes||'')+'</p>'});
+  section[1].forEach(item=>{html+='<p>• '+safe(item.date)+' — '+safe(item.title||'')+' '+safe(item.status||'')+' '+safe(item.notes||'')+(section[0]==="Tree monitoring records"?'<br>'+safe(tr("Planting date"))+': '+safe(item.planting_date||item.date)+' · '+safe(tr("Sample planting site"))+': '+safe(item.area||"")+' · '+safe(tr(item.method||""))+' · '+safe(tr(item.condition||""))+' · '+safe(tr("Quantity planted"))+': '+safe(item.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(item.alive):'')+'</p>'});
  });
  if(!activities.length&&!farmers.length&&!trees.length&&!reports.length)html+='<p>'+safe(tr("No records in this period."))+'</p>';
  preview.innerHTML=html;
