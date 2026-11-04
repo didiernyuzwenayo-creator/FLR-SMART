@@ -81,7 +81,7 @@ function render(){
   const records=read(key);
   document.getElementById(({activities:"ac",farmers:"fa",trees:"tr",reports:"re"})[key]).textContent=records.length;
   const list=document.getElementById(key+"-list");
-  if(list)list.innerHTML=records.map((record,index)=>'<div class="item"><b>'+safe(record.title||tr("Daily Reports"))+'</b><small>'+safe(record.date)+' · '+safe(tr(record.status||record.area||""))+'</small><p>'+safe(record.notes)+'</p>'+(key==="trees"?'<small>'+safe(tr("Quantity planted"))+': '+safe(record.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(record.alive)+'</small>':'')+'<div class="record-actions"><button type="button" class="edit-record" data-edit="'+key+'" data-index="'+index+'">'+safe(tr("Edit"))+'</button><button type="button" class="delete-record" data-delete="'+key+'" data-index="'+index+'">'+safe(tr("Delete"))+'</button></div></div>').join("")||tr("No records yet.");
+  if(list)list.innerHTML=records.slice().reverse().map((record,reverseIndex)=>{const index=records.length-1-reverseIndex;return '<div class="item"><b>'+safe(record.title||tr("Daily Reports"))+'</b><small>'+safe(record.date)+' · '+safe(tr(record.status||record.area||""))+'</small><p>'+safe(record.notes)+'</p>'+(key==="trees"?'<small>'+safe(tr("Quantity planted"))+': '+safe(record.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(record.alive)+'</small>':'')+'<div class="record-actions"><button type="button" class="edit-record" data-edit="'+key+'" data-index="'+index+'">'+safe(tr("Edit"))+'</button><button type="button" class="delete-record" data-delete="'+key+'" data-index="'+index+'">'+safe(tr("Delete"))+'</button></div></div>'}).join("")||tr("No records yet.");
  });
  const recent=keys.flatMap(key=>read(key).map(record=>({...record,kind:key}))).slice(-5).reverse();
  document.getElementById("recent").innerHTML=recent.map(record=>'<div class="item"><b>'+safe(record.title)+'</b><small>'+safe(record.date)+' · '+safe(tr(({activities:"Activities",farmers:"Farmer follow-ups",trees:"Tree records",reports:"Daily Reports"})[record.kind]))+'</small></div>').join("")||tr("No records yet.");
@@ -94,7 +94,8 @@ function editRecord(key,index){
  Object.keys(record).forEach(name=>{const field=form.elements.namedItem(name);if(field)field.value=record[name]??""});
  form.dataset.editIndex=String(index);
  let cancel=form.querySelector(".cancel-edit");
- if(!cancel){cancel=document.createElement("button");cancel.type="button";cancel.className="cancel-edit secondary";cancel.textContent=tr("Cancel edit");form.appendChild(cancel);cancel.addEventListener("click",()=>{delete form.dataset.editIndex;form.reset();cancel.remove();document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft"})[key]);})}
+ if(!cancel){cancel=document.createElement("button");cancel.type="button";cancel.className="cancel-edit secondary";cancel.textContent=tr("Cancel edit");form.appendChild(cancel);cancel.addEventListener("click",()=>{delete form.dataset.editIndex;form.reset();cancel.remove();document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
+document.getElementById("summary-from").value=todayLocal();document.getElementById("summary-to").value=todayLocal();form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft"})[key]);})}
  form.querySelector(".save").textContent=tr("Update record");
  show(key);form.scrollIntoView({behavior:"smooth",block:"start"});
 }
