@@ -89,7 +89,8 @@ const words={
 "Healthy":"Kimeze neza",
 "Drying":"Kiruma",
 "Dead":"Cyumye",
-"*Based on quantities entered in Tree Monitoring; not an official survival assessment.":"*Bishingiye ku mibare winjije mu gukurikirana ibiti; si isuzuma ryemewe ry’ukurokoka kw’ibiti."
+"*Based on quantities entered in Tree Monitoring; not an official survival assessment.":"*Bishingiye ku mibare winjije mu gukurikirana ibiti; si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
+"*Based on the latest observation for each species and sample site; not an official survival assessment.":"*Bishingiye ku igenzura riheruka kuri buri bwoko n’ahantu h’icyitegererezo; si isuzuma ryemewe ry’ukurokoka kw’ibiti."
 };
 function tr(text){const lang=localStorage.getItem("flr_language")||"en";return lang==="rw"?(words[text]||text):text}
 function todayLocal(){const now=new Date();const offset=now.getTimezoneOffset();return new Date(now.getTime()-offset*60000).toISOString().slice(0,10)}
@@ -145,9 +146,10 @@ function editRecord(key,index){
  const records=read(key),record=records[index],form=document.querySelector('form[data-store="'+key+'"]');
  if(!record||!form)return;
  Object.keys(record).forEach(name=>{const field=form.elements.namedItem(name);if(field)field.value=record[name]??""});
+ if(key==="trees"){if(form.elements.namedItem("planting_date")&&!record.planting_date)form.elements.namedItem("planting_date").value=record.date||todayLocal();if(form.elements.namedItem("method")&&!record.method)form.elements.namedItem("method").value="Not specified";if(form.elements.namedItem("condition")&&!record.condition)form.elements.namedItem("condition").value="Not assessed";}
  form.dataset.editIndex=String(index);
  let cancel=form.querySelector(".cancel-edit");
- if(!cancel){cancel=document.createElement("button");cancel.type="button";cancel.className="cancel-edit secondary";cancel.textContent=tr("Cancel edit");form.appendChild(cancel);cancel.addEventListener("click",()=>{delete form.dataset.editIndex;form.reset();cancel.remove();document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
+ if(!cancel){cancel=document.createElement("button");cancel.type="button";cancel.className="cancel-edit secondary";cancel.textContent=tr("Cancel edit");form.appendChild(cancel);cancel.addEventListener("click",()=>{delete form.dataset.editIndex;form.reset();cancel.remove();form.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
 form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft"})[key]);})}
  form.querySelector(".save").textContent=tr("Update record");
  show(key);form.scrollIntoView({behavior:"smooth",block:"start"});
