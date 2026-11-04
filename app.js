@@ -67,7 +67,13 @@ const words={
 "Update record":"Bika impinduka",
 "Cancel edit":"Reka guhindura",
 "Are you sure you want to delete this record?":"Urashaka koko gusiba iyi nyandiko?",
-"Field summary":"Incamake y’ibikorwa byo mu mirima","From":"Kuva","To":"Kugeza","Generate summary":"Kora incamake","Print / Save PDF":"Sohora / Bika nka PDF","Choose a date range and generate a field summary.":"Hitamo igihe ushaka hanyuma ukore incamake y’ibikorwa.","Summary period":"Igihe cy’incamake","Activities recorded":"Ibikorwa byanditswe","Tree monitoring records":"Inyandiko zo gukurikirana ibiti","Trees planted":"Ibiti byatewe","Trees observed alive":"Ibiti byabonetse bikiriho","Saved daily reports":"Raporo zabitswe","No records in this period.":"Nta nyandiko zabonetse muri iki gihe.","Please choose a valid date range.":"Hitamo igihe gifite amatariki yemewe.","FIELD SUMMARY":"INCAMAKE Y’IBIKORWA BYO MU MIRIMA"
+"Field summary":"Incamake y’ibikorwa byo mu mirima","From":"Kuva","To":"Kugeza","Generate summary":"Kora incamake","Print / Save PDF":"Sohora / Bika nka PDF","Choose a date range and generate a field summary.":"Hitamo igihe ushaka hanyuma ukore incamake y’ibikorwa.","Summary period":"Igihe cy’incamake","Activities recorded":"Ibikorwa byanditswe","Tree monitoring records":"Inyandiko zo gukurikirana ibiti","Trees planted":"Ibiti byatewe","Trees observed alive":"Ibiti byabonetse bikiriho","Saved daily reports":"Raporo zabitswe","No records in this period.":"Nta nyandiko zabonetse muri iki gihe.","Please choose a valid date range.":"Hitamo igihe gifite amatariki yemewe.","FIELD SUMMARY":"INCAMAKE Y’IBIKORWA BYO MU MIRIMA",
+"Field performance · Last 6 months":"Imikorere y’akazi · Amezi 6 ashize",
+"Monthly activities":"Ibikorwa bya buri kwezi",
+"Tree planting trend":"Imigendekere yo gutera ibiti",
+"Observed tree survival rate*":"Ijanisha ry’ibiti byabonetse bikiriho*",
+"No data":"Nta makuru arahari",
+"*Based on quantities entered in Tree Monitoring; not an official survival assessment.":"*Bishingiye ku mibare winjije mu gukurikirana ibiti; si isuzuma ryemewe ry’ukurokoka kw’ibiti."
 };
 function tr(text){const lang=localStorage.getItem("flr_language")||"en";return lang==="rw"?(words[text]||text):text}
 function todayLocal(){const now=new Date();const offset=now.getTimezoneOffset();return new Date(now.getTime()-offset*60000).toISOString().slice(0,10)}
@@ -76,6 +82,22 @@ function safe(value){return String(value||"").replace(/[&<>"']/g,char=>({"&":"&a
 function show(id){document.querySelectorAll(".page").forEach(page=>page.classList.toggle("active",page.id===id));document.querySelectorAll("nav button").forEach(button=>button.classList.toggle("active",button.dataset.page===id))}
 document.querySelectorAll("[data-page]").forEach(button=>button.addEventListener("click",()=>show(button.dataset.page)));
 document.querySelectorAll("[data-open]").forEach(button=>button.addEventListener("click",()=>show(button.dataset.open)));
+
+function renderAnalytics(){
+ const now=new Date(),months=[];
+ for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({year:d.getFullYear(),month:d.getMonth(),label:new Intl.DateTimeFormat(localStorage.getItem("flr_language")==="rw"?"rw-RW":"en-US",{month:"short"}).format(d),activities:0,planted:0})}
+ const findMonth=date=>{if(!date)return null;const d=new Date(date+"T12:00:00");return months.find(m=>m.year===d.getFullYear()&&m.month===d.getMonth())};
+ read("activities").forEach(item=>{const m=findMonth(item.date);if(m)m.activities++});
+ read("trees").forEach(item=>{const m=findMonth(item.date);if(m)m.planted+=Math.max(0,Number(item.planted)||0)});
+ const draw=(id,key)=>{
+  const el=document.getElementById(id),max=Math.max(1,...months.map(m=>m[key]));
+  el.innerHTML=months.map(m=>'<div class="bar-column" title="'+safe(m.label)+': '+Number(m[key]).toLocaleString()+'"><div class="bar-value">'+Number(m[key]).toLocaleString()+'</div><div class="bar-track"><div class="bar-fill '+(key==="planted"?"tree-fill":"activity-fill")+'" style="height:'+Math.max(m[key]>0?4:0,m[key]/max*100)+'%"></div></div><small>'+safe(m.label)+'</small></div>').join("");
+  if(months.every(m=>m[key]===0))el.innerHTML='<p class="chart-empty">'+safe(tr("No data"))+'</p>';
+ };
+ draw("activity-chart","activities");draw("tree-chart","planted");
+ const treeRecords=read("trees"),planted=treeRecords.reduce((s,r)=>s+Math.max(0,Number(r.planted)||0),0),alive=treeRecords.reduce((s,r)=>s+Math.max(0,Number(r.alive)||0),0);
+ document.getElementById("survival-rate").textContent=planted?Math.min(100,alive/planted*100).toFixed(1)+"%":"—";
+}
 function render(){
  keys.forEach(key=>{
   const records=read(key);
@@ -87,6 +109,7 @@ function render(){
  document.getElementById("recent").innerHTML=recent.map(record=>'<div class="item"><b>'+safe(record.title)+'</b><small>'+safe(record.date)+' · '+safe(tr(({activities:"Activities",farmers:"Farmer follow-ups",trees:"Tree records",reports:"Daily Reports"})[record.kind]))+'</small></div>').join("")||tr("No records yet.");
  document.querySelectorAll("[data-edit]").forEach(button=>button.addEventListener("click",()=>editRecord(button.dataset.edit,Number(button.dataset.index))));
  document.querySelectorAll("[data-delete]").forEach(button=>button.addEventListener("click",()=>deleteRecord(button.dataset.delete,Number(button.dataset.index))));
+ renderAnalytics();
 }
 function editRecord(key,index){
  const records=read(key),record=records[index],form=document.querySelector('form[data-store="'+key+'"]');
@@ -95,7 +118,7 @@ function editRecord(key,index){
  form.dataset.editIndex=String(index);
  let cancel=form.querySelector(".cancel-edit");
  if(!cancel){cancel=document.createElement("button");cancel.type="button";cancel.className="cancel-edit secondary";cancel.textContent=tr("Cancel edit");form.appendChild(cancel);cancel.addEventListener("click",()=>{delete form.dataset.editIndex;form.reset();cancel.remove();document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
-document.getElementById("summary-from").value=todayLocal();document.getElementById("summary-to").value=todayLocal();form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft"})[key]);})}
+form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft"})[key]);})}
  form.querySelector(".save").textContent=tr("Update record");
  show(key);form.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -163,5 +186,6 @@ function applyLanguage(){
 }
 document.getElementById("language").addEventListener("change",event=>{localStorage.setItem("flr_language",event.target.value);location.reload()});
 document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
+document.getElementById("summary-from").value=todayLocal();document.getElementById("summary-to").value=todayLocal();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(error=>console.warn("Service worker unavailable",error)))}
 applyLanguage();render();
