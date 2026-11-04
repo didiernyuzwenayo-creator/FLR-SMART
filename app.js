@@ -64,6 +64,7 @@ const words={
 "No records yet.":"Nta nyandiko ziraboneka."
 };
 function tr(text){const lang=localStorage.getItem("flr_language")||"en";return lang==="rw"?(words[text]||text):text}
+function todayLocal(){const now=new Date();const offset=now.getTimezoneOffset();return new Date(now.getTime()-offset*60000).toISOString().slice(0,10)}
 function read(key){try{return JSON.parse(localStorage.getItem("flr_"+key)||"[]")}catch(error){return[]}}
 function safe(value){return String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
 function show(id){document.querySelectorAll(".page").forEach(page=>page.classList.toggle("active",page.id===id));document.querySelectorAll("nav button").forEach(button=>button.classList.toggle("active",button.dataset.page===id))}
@@ -86,7 +87,7 @@ document.querySelectorAll("form[data-store]").forEach(form=>form.addEventListene
  const records=read(form.dataset.store);records.push(data);
  localStorage.setItem("flr_"+form.dataset.store,JSON.stringify(records));
  form.reset();
- document.querySelectorAll('input[type="date"]').forEach(input=>input.value=new Date().toISOString().slice(0,10));
+ document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
  render();alert(tr("Saved on this device."));
 }));
 document.getElementById("export").addEventListener("click",()=>{
@@ -106,6 +107,6 @@ function applyLanguage(){
  }
 }
 document.getElementById("language").addEventListener("change",event=>{localStorage.setItem("flr_language",event.target.value);location.reload()});
-document.querySelectorAll('input[type="date"]').forEach(input=>input.value=new Date().toISOString().slice(0,10));
+document.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(error=>console.warn("Service worker unavailable",error)))}
 applyLanguage();render();
