@@ -4,6 +4,7 @@ const words={
 "FLR SMART · My Field Assistant · Version 1.0 · Personal prototype":"FLR SMART · Umufasha wanjye mu kazi · Verisiyo 1.0 · Igerageza bwite",
 "Saved on this device.":"Byabitswe kuri iki gikoresho.",
 "Alive quantity cannot exceed planted quantity.":"Umubare w'ibiti bikiriho ntushobora kurenga uwatewe.",
+"Tree quantities must be whole numbers greater than or equal to zero.":"Umubare w’ibiti ugomba kuba umubare wuzuye kandi utari munsi ya zeru.",
 "MY FIELD ASSISTANT":"UMUFASHA W'AKAZI KO MU MIRIMA",
 "FIELD OFFICER":"USHINZWE AKAZI KO MU MIRIMA",
 "Dashboard":"Ahabanza",
@@ -122,7 +123,8 @@ const words={
 "*Based on quantities entered in Tree Monitoring; not an official survival assessment.":"*Bishingiye ku mibare winjije mu gukurikirana ibiti; si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
 "*Based on the latest observation for each species and sample site; not an official survival assessment.":"*Bishingiye ku igenzura riheruka kuri buri bwoko n’ahantu h’icyitegererezo; si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
 "*Based on the latest observation recorded during this month for each species and sample site; this is an estimate, not an official survival assessment.":"*Bishingiye ku igenzura riheruka muri uko kwezi kuri buri bwoko n’ahantu h’icyitegererezo; ni igereranya, si isuzuma ryemewe ry’ukurokoka kw’ibiti.",
-"Field Calendar":"Kalendari y’ibikorwa byo mu mirima","FIELD PLANNING":"GUTEGURA IBIKORWA","Plan field activity":"Teganya igikorwa cyo mu murima","Planned field activities":"Ibikorwa biteganyijwe","Upcoming and overdue":"Ibikorwa biri hafi n’ibyarengeje igihe","Plan sample field activities and review what is due. Reminders are shown inside this app only.":"Teganya ibikorwa by’icyitegererezo urebe ibigiye gukorwa. Ibibutsa bigaragarira muri iyi porogaramu gusa.","Activity title":"Izina ry’igikorwa","Planned date":"Itariki iteganyijwe","Time (optional)":"Isaha (si ngombwa)","Category":"Icyiciro","Field visit":"Gusura aho ibikorwa biri","Meeting":"Inama","Postponed":"Cyigijwe inyuma","Save planned activity":"Bika igikorwa giteganyijwe","e.g. Sample field visit":"Urugero: gusura ahantu h’icyitegererezo","No planned activities yet.":"Nta bikorwa biteganyijwe biraboneka.","Due today":"Giteganyijwe uyu munsi","Overdue":"Igihe cyacyo cyarenze","Upcoming":"Kiri hafi","No upcoming activities.":"Nta bikorwa biri hafi.","Reminders are in-app only; no push notifications are sent.":"Ibibutsa biri muri porogaramu gusa; nta butumwa bwo hanze bwoherezwa."
+"Field Calendar":"Kalendari y’ibikorwa byo mu mirima","FIELD PLANNING":"GUTEGURA IBIKORWA","Plan field activity":"Teganya igikorwa cyo mu murima","Planned field activities":"Ibikorwa biteganyijwe","Upcoming and overdue":"Ibikorwa biri hafi n’ibyarengeje igihe","Plan sample field activities and review what is due. Reminders are shown inside this app only.":"Teganya ibikorwa by’icyitegererezo urebe ibigiye gukorwa. Ibibutsa bigaragarira muri iyi porogaramu gusa.","Activity title":"Izina ry’igikorwa","Planned date":"Itariki iteganyijwe","Time (optional)":"Isaha (si ngombwa)","Category":"Icyiciro","Field visit":"Gusura aho ibikorwa biri","Meeting":"Inama","Postponed":"Cyigijwe inyuma","Save planned activity":"Bika igikorwa giteganyijwe","e.g. Sample field visit":"Urugero: gusura ahantu h’icyitegererezo","No planned activities yet.":"Nta bikorwa biteganyijwe biraboneka.","Due today":"Giteganyijwe uyu munsi","Overdue":"Igihe cyacyo cyarenze","Upcoming":"Kiri hafi","No upcoming activities.":"Nta bikorwa biri hafi.","Reminders are in-app only; no push notifications are sent.":"Ibibutsa biri muri porogaramu gusa; nta butumwa bwo hanze bwoherezwa.",
+"Calendar (CSV)":"Kalendari (CSV)"
 };
 function tr(text){const lang=localStorage.getItem("flr_language")||"en";return lang==="rw"?(words[text]||text):text}
 function todayLocal(){const now=new Date();const offset=now.getTimezoneOffset();return new Date(now.getTime()-offset*60000).toISOString().slice(0,10)}
@@ -168,7 +170,7 @@ function render(){
   const list=document.getElementById(key+"-list");
   if(list)list.innerHTML=records.slice().reverse().map((record,reverseIndex)=>{const index=records.length-1-reverseIndex;return '<div class="item"><b>'+safe(record.title||tr("Daily Reports"))+'</b><small>'+safe(record.date)+' · '+safe(tr(record.status||record.area||""))+'</small><p>'+safe(record.notes)+'</p>'+(key==="trees"?'<small>'+safe(tr("Planting date"))+': '+safe(record.planting_date||record.date)+' · '+safe(tr("Quantity planted"))+': '+safe(record.planted)+' · '+safe(tr("Quantity observed alive"))+': '+safe(record.alive)+'</small><small>'+safe(record.area||"")+' · '+safe(tr(record.method||""))+' · '+safe(tr(record.condition||""))+'</small>':'')+'<div class="record-actions"><button type="button" class="edit-record" data-edit="'+key+'" data-index="'+index+'">'+safe(tr("Edit"))+'</button><button type="button" class="delete-record" data-delete="'+key+'" data-index="'+index+'">'+safe(tr("Delete"))+'</button></div></div>'}).join("")||tr("No records yet.");
  });
- const recent=keys.flatMap(key=>read(key).map(record=>({...record,kind:key}))).slice(-5).reverse();
+ const recent=keys.flatMap(key=>read(key).map(record=>({...record,kind:key}))).sort((a,b)=>{const time=x=>new Date(x.created_at||(x.date?x.date+"T12:00:00":"1970-01-01")).getTime()||0;return time(b)-time(a)}).slice(0,5);
  document.getElementById("recent").innerHTML=recent.map(record=>'<div class="item"><b>'+safe(record.title)+'</b><small>'+safe(record.date)+' · '+safe(tr(({activities:"Activities",farmers:"Farmer follow-ups",trees:"Tree records",reports:"Daily Reports",calendar:"Field Calendar"})[record.kind]))+'</small></div>').join("")||tr("No records yet.");
  document.querySelectorAll("[data-edit]").forEach(button=>button.addEventListener("click",()=>editRecord(button.dataset.edit,Number(button.dataset.index))));
  document.querySelectorAll("[data-delete]").forEach(button=>button.addEventListener("click",()=>deleteRecord(button.dataset.delete,Number(button.dataset.index))));
@@ -206,10 +208,11 @@ function deleteRecord(key,index){
 document.querySelectorAll("form[data-store]").forEach(form=>form.addEventListener("submit",event=>{
  event.preventDefault();
  const data=Object.fromEntries(new FormData(form));
- if(form.dataset.store==="trees"&&Number(data.alive)>Number(data.planted)){alert(tr("Alive quantity cannot exceed planted quantity."));return}
+ if(form.dataset.store==="trees"&&(!Number.isInteger(Number(data.planted))||!Number.isInteger(Number(data.alive))||Number(data.planted)<0||Number(data.alive)<0)){alert(tr("Tree quantities must be whole numbers greater than or equal to zero."));return}
+  if(form.dataset.store==="trees"&&Number(data.alive)>Number(data.planted)){alert(tr("Alive quantity cannot exceed planted quantity."));return}
  const records=read(form.dataset.store),editing=form.dataset.editIndex;
- if(editing!==undefined){records[Number(editing)]=data;delete form.dataset.editIndex;const cancel=form.querySelector(".cancel-edit");if(cancel)cancel.remove();form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft",calendar:"Save planned activity"})[form.dataset.store]);}
- else records.push(data);
+ if(editing!==undefined){const old=records[Number(editing)]||{};records[Number(editing)]={...old,...data,created_at:old.created_at||new Date().toISOString()};delete form.dataset.editIndex;const cancel=form.querySelector(".cancel-edit");if(cancel)cancel.remove();form.querySelector(".save").textContent=tr(({activities:"Save activity",farmers:"Save follow-up",trees:"Save tree record",reports:"Save report draft",calendar:"Save planned activity"})[form.dataset.store]);}
+ else records.push({...data,created_at:new Date().toISOString()});
  localStorage.setItem("flr_"+form.dataset.store,JSON.stringify(records));
  form.reset();
  form.querySelectorAll('input[type="date"]').forEach(input=>input.value=todayLocal());
@@ -304,17 +307,17 @@ document.getElementById("build-summary").addEventListener("click",buildSummary);
 document.getElementById("print-summary").addEventListener("click",()=>window.print());
 function csvCell(value){
  let text=String(value??"");
- if(/^[=+@\\-\\t\\r]/.test(text))text="'"+text;
+ if(/^[=+@\-\t\r]/.test(text))text="'"+text;
  return '"'+text.replace(/"/g,'""')+'"';
 }
 function downloadCsv(filename,fields,records){
  const rows=[fields.map(csvCell).join(","),...records.map(record=>fields.map(field=>csvCell(record[field])).join(","))];
- const content="\\uFEFF"+rows.join("\\r\\n");
+ const content="\uFEFF"+rows.join("\r\n");
  const url=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8"}));
  const link=document.createElement("a");link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function exportCsv(group){
- const labels={activities:"activities",farmers:"farmer-follow-ups",trees:"tree-monitoring",reports:"daily-reports"};
+ const labels={activities:"activities",farmers:"farmer-follow-ups",trees:"tree-monitoring",reports:"daily-reports",calendar:"calendar"};
  if(group==="all"){
   const records=keys.flatMap(key=>read(key).map(record=>({record_type:key,...record})));
   const fields=["record_type",...new Set(records.flatMap(record=>Object.keys(record).filter(field=>field!=="record_type")))];
@@ -323,7 +326,7 @@ function exportCsv(group){
  }
  const records=read(group);
  const fields=[...new Set(records.flatMap(record=>Object.keys(record)))];
- if(!fields.length)fields.push(...({activities:["title","date","status","area","notes"],farmers:["title","date","status","area","notes"],trees:["title","planting_date","date","area","method","condition","planted","alive","notes"],reports:["date","title","area","notes"]}[group]));
+ if(!fields.length)fields.push(...({activities:["title","date","status","area","notes"],farmers:["title","date","status","area","notes"],trees:["title","planting_date","date","area","method","condition","planted","alive","notes"],reports:["date","title","area","notes"],calendar:["title","date","time","category","area","status","notes"]}[group]));
  downloadCsv("flr-smart-"+labels[group]+".csv",fields,records);
 }
 document.querySelectorAll("[data-export-csv]").forEach(button=>button.addEventListener("click",()=>exportCsv(button.dataset.exportCsv)));
