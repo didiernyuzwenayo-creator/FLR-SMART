@@ -1,1 +1,11 @@
-{"name":"FLR SMART – My Field Assistant","short_name":"FLR SMART","start_url":"./","display":"standalone","background_color":"#f5f8f5","theme_color":"#206b43","description":"Personal Field Officer assistant prototype."}
+{
+  "name": "FLR SMART | Field & Learning Assistant",
+  "short_name": "FLR SMART",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f7f2",
+  "theme_color": "#174d38",
+  "description": "Practical tools to support FLR learning and field operations."
+}
