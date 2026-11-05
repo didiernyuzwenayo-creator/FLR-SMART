@@ -1,6 +1,7 @@
 const $=s=>document.querySelector(s);const content=$('#content');let lang=localStorage.getItem('flr_lang')||'en';let farmers=JSON.parse(localStorage.getItem('flr_farmers')||'[]');let surveys=JSON.parse(localStorage.getItem('flr_surveys')||'[]');let reports=JSON.parse(localStorage.getItem('flr_reports')||'[]');let page='dashboard';
 
 const rwLessonData = {
+0:['Guhitamo site: Guhitamo ahantu hakwiye gukorerwa FLR','Kumenya uko Field Officer asuzuma ahantu hashobora gukorerwa ibikorwa bya FLR.','Ubumenyi bw’ingenzi kuri Field Officer','','',''],
 1:['Amahame ya FLR no kureba imiterere y’ahantu hose','Gusobanukirwa uburyo bwo guhuza gusana ibidukikije n’ibikenewe n’abaturage.','Amahame shingiro',
 '<p>FLR ikoresha uburyo bwo kureba ahantu hose nk’urusobe ruhuza imirima, amashyamba, imisozi, ibibaya, inkombe z’imigezi n’indi mikoreshereze y’ubutaka. Intego ni ukugarura imikorere y’ibidukikije no guteza imbere imibereho y’abaturage mu gihe kirekire.</p><p>Ibikorwa bigomba gutegurwa hakurikijwe imiterere y’aho hantu, ibyifuzo by’abaturage, ubutaka, amazi, ibimera bisanzwe n’ibikorwa bihasanzwe. Gutera ibiti byinshi byonyine si byo bipimo byonyine byerekana ko FLR yageze ku ntego.</p>',
 'Mu ruzinduko, reba umurima mu miterere y’ahawukikije: ubuhaname, imikoreshereze y’ubutaka, inzira z’amazi, ibimera bihari n’ibyo abaturage bakeneye. Menya niba igikorwa giteganyijwe gihuye n’aho hantu, kandi ugeze ibyemezo bya tekiniki ku itsinda ribishinzwe.',
