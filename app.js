@@ -194,3 +194,38 @@ function checkSiteQuizRw(){
  for(let i=1;i<=5;i++){const selected=document.querySelector('input[name="sq'+i+'"]:checked');const correct=selected&&selected.value===answers['sq'+i];if(correct)score++;html+='<p><b>Ikibazo '+i+': '+(correct?'Wakiriye neza':'Ongera usuzume igisubizo')+'.</b> '+explanations['sq'+i]+'</p>';}
  document.querySelector('#siteQuizResult').innerHTML='<div class="result"><h3>Amanota yawe: '+score+'/5</h3>'+html+(score===5?'<b>Ni byiza cyane! Wasobanukiwe n’ishingiro rya Site Selection.</b>':'<b>Subira mu isomo wongere ugerageze kugira ngo urusheho gusobanukirwa.</b>')+'</div>';
 }
+
+
+// PWA installation support.
+let flrInstallPrompt = null;
+const flrInstallButton = document.getElementById('installBtn');
+function updateInstallButton() {
+  if (!flrInstallButton) return;
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  flrInstallButton.hidden = isInstalled || !flrInstallPrompt;
+  flrInstallButton.textContent = lang === 'rw' ? 'Shyira muri telefoni' : 'Install app';
+}
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  flrInstallPrompt = event;
+  updateInstallButton();
+});
+window.addEventListener('appinstalled', () => {
+  flrInstallPrompt = null;
+  updateInstallButton();
+});
+if (flrInstallButton) {
+  flrInstallButton.addEventListener('click', async () => {
+    if (!flrInstallPrompt) {
+      alert(lang === 'rw'
+        ? 'Kanda utudomo dutatu muri Chrome, uhitemo “Install app” cyangwa “Add to Home screen”.'
+        : 'Open the three-dot Chrome menu and choose “Install app” or “Add to Home screen”.');
+      return;
+    }
+    flrInstallPrompt.prompt();
+    await flrInstallPrompt.userChoice;
+    flrInstallPrompt = null;
+    updateInstallButton();
+  });
+}
+updateInstallButton();
