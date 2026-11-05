@@ -1,4 +1,4 @@
-const CACHE_NAME = "flr-smart-v13";
+const CACHE_NAME = "flr-smart-v14";
 const APP_FILES = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json"];
 
 self.addEventListener("install", event => {
