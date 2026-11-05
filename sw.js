@@ -1,5 +1,5 @@
-const CACHE_NAME = "flr-smart-v20";
-const APP_FILES = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json"];
+const CACHE_NAME = "flr-smart-v21";
+const APP_FILES = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
